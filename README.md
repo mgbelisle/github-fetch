@@ -25,7 +25,10 @@ OPTIONS:
 
 ```
 $ github-fetch --owner mgbelisle --dir ~/github
-$ 
+$ ls ~/github/mgbelisle
+...
+github-fetch
+...
 ```
 
 # Installation
