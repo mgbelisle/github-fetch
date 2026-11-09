@@ -77,8 +77,9 @@ func main() {
 		}
 		repos = fields
 	} else {
+		reposPath := ownerReposPath(*ownerFlag)
 		for i := 1; ; i++ {
-			request, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/orgs/%s/repos?page=%d&per_page=100", url.PathEscape(*ownerFlag), i), nil)
+			request, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/%s?page=%d&per_page=100", reposPath, i), nil)
 			request.Header.Set("Authorization", "token "+githubToken)
 			response, err := http.DefaultClient.Do(request)
 			if err != nil {
@@ -185,6 +186,31 @@ func gitHead(dir string) (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(head), nil
+}
+
+func ownerReposPath(owner string) string {
+	request, _ := http.NewRequest("GET", "https://api.github.com/users/"+url.PathEscape(owner), nil)
+	request.Header.Set("Authorization", "token "+githubToken)
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		panic(err)
+	}
+	if response.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(response.Body)
+		panic(fmt.Errorf("%s %d\n%s", request.URL, response.StatusCode, body))
+	}
+	var obj struct {
+		Type string `json:"type"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&obj); err != nil {
+		panic(err)
+	}
+	switch obj.Type {
+	case "Organization":
+		return "orgs/" + url.PathEscape(owner) + "/repos"
+	default:
+		return "users/" + url.PathEscape(owner) + "/repos"
+	}
 }
 
 func local(name string) {
