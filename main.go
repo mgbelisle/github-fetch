@@ -255,5 +255,8 @@ func fetch(repo string) error {
 	if _, err := git("-C", dir, "checkout", "FETCH_HEAD"); err != nil {
 		return err
 	}
+	if _, err := git("-C", dir, "gc", "--prune=now", "--quiet"); err != nil {
+		return err
+	}
 	return nil
 }
